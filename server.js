@@ -105,7 +105,12 @@ app.get("/orders", async (req, res) => {
 });
 
 // ✅ Start Server
-app.listen(PORT, () => {
-  console.log(`\n🚀 Server running at http://localhost:${PORT}`);
-  console.log(`📖 Open the page: http://localhost:${PORT}/index.html\n`);
-});
+// Local dev: start server normally; Vercel: export app as serverless function
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Server running at http://localhost:${PORT}`);
+    console.log(`📖 Open the page: http://localhost:${PORT}/index.html\n`);
+  });
+}
+
+module.exports = app;
