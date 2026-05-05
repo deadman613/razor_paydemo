@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Razorpay Test Payment</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 480px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #339af0, #5f3dc4);
+      color: #fff;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+    .header p { opacity: 0.85; font-size: 0.95rem; }
+    .form-body { padding: 30px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.9rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border 0.3s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #5f3dc4;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-pay {
+      background: linear-gradient(135deg, #339af0, #5f3dc4);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(95, 61, 196, 0.4);
+    }
+    .btn-pay:hover { box-shadow: 0 6px 20px rgba(95, 61, 196, 0.6); }
+    .test-keys-info {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+      color: #664d03;
+    }
+    .test-keys-info code {
+      background: rgba(0,0,0,0.07);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    /* Result Card */
+    .result-card {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-card.success {
+      background: #d3f9d8;
+      border: 2px solid #2f9e44;
+      color: #2b8a3e;
+    }
+    .result-card.error {
+      background: #ffe3e3;
+      border: 2px solid #e03131;
+      color: #c92a2a;
+    }
+    .result-card h3 { margin-bottom: 8px; font-size: 1.2rem; }
+    .result-card p  { font-size: 0.88rem; margin: 4px 0; }
+    .result-card .detail-label { font-weight: 700; }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 10px;
+      color: #5f3dc4;
+      font-weight: 600;
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid #5f3dc4;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💳 Razorpay Test</h1>
+      <p>Single-page payment testing with backend verification</p>
+    </div>
+
+    <div class="form-body">
+      <div class="test-keys-info">
+        🔑 Get test keys from <code>dashboard.razorpay.com</code> → Settings → API Keys<br/>
+        🧪 Use <strong>Test Mode</strong> toggle in the dashboard.
+      </div>
+
+      <div class="form-group">
+        <label>Customer Name</label>
+        <input type="text" id="customerName" placeholder="e.g. John Doe" value="Test User"/>
+      </div>
+      <div class="form-group">
+        <label>Customer Email</label>
+        <input type="email" id="customerEmail" placeholder="e.g. test@example.com" value="test@example.com"/>
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="customerPhone" placeholder="e.g. 9999999999" maxlength="10" pattern="[0-9]{10}"/>
+      </div>
+      <div class="form-group">
+        <label>Amount (₹ INR)</label>
+        <input type="number" id="amount" placeholder="e.g. 500" value="500" min="1"/>
+      </div>
+
+      <button class="btn btn-pay" id="payBtn" onclick="initiatePayment()">
+        Pay Now
+      </button>
+
+      <div class="loading" id="loading">
+        <span class="spinner"></span> Processing...
+      </div>
+
+      <div class="result-card" id="resultCard">
+        <h3 id="resultTitle"></h3>
+        <div id="resultDetails"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================
+    //  PAYMENT FLOW
+    // ============================
+    async function initiatePayment() {
+      const amount   = document.getElementById("amount").value;
+      const name     = document.getElementById("customerName").value;
+      const email    = document.getElementById("customerEmail").value;
+      const phone    = document.getElementById("customerPhone").value;
+      const payBtn   = document.getElementById("payBtn");
+      const loading  = document.getElementById("loading");
+      const result   = document.getElementById("resultCard");
+
+      if (!amount || amount < 1) {
+        alert("Please enter a valid amount!");
+        return;
+      }
+      if (!phone || !/^[0-9]{10}$/.test(phone)) {
+        alert("Please enter a valid 10-digit phone number!");
+        return;
+      }
+
+      // UI: show loading
+      payBtn.disabled = true;
+      payBtn.style.opacity = "0.6";
+      loading.style.display = "block";
+      result.style.display = "none";
+
+      try {
+        // Step 1: Create order on backend
+        const res = await fetch("/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: parseFloat(amount),
+            currency: "INR",
+            receipt: `receipt_${Date.now()}`
+          }),
+        });
+
+        const rawText = await res.text();
+        if (!rawText) throw new Error("Empty response from server. Is the server running on port 3000?");
+        let data;
+        try { data = JSON.parse(rawText); }
+        catch (e) { throw new Error("Server returned non-JSON: " + rawText.substring(0, 200)); }
+        if (!data.success) throw new Error(data.error || "Order creation failed");
+
+        // Step 2: Open Razorpay Checkout
+        const options = {
+          key: data.key,
+          amount: data.amount,
+          currency: data.currency,
+          name: "Razorpay Test Store",
+          description: "Test Payment",
+          order_id: data.orderId,
+          handler: async function (response) {
+            // Step 3: Verify payment on backend
+            verifyPayment(response);
+          },
+          prefill: {
+            name: name,
+            email: email,
+            contact: phone
+          },
+          theme: { color: "#5f3dc4" },
+          modal: {
+            ondismiss: function () {
+              resetUI();
+              showResult(
+                false,
+                "Payment Cancelled",
+                "You closed the checkout window."
+              );
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on("payment.failed", function (response) {
+          resetUI();
+          showResult(false, "Payment Failed", JSON.stringify(response.error, null, 2));
+        });
+        rzp.open();
+
+      } catch (err) {
+        resetUI();
+        showResult(false, "Error", err.message);
+      }
+    }
+
+    async function verifyPayment(paymentResponse) {
+      try {
+        const res = await fetch("/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(paymentResponse),
+        });
+
+        const rawText = await res.text();
+        if (!rawText) throw new Error("Empty response from server during verification.");
+        let data;
+        try { data = JSON.parse(rawText); }
+        catch (e) { throw new Error("Server returned non-JSON: " + rawText.substring(0, 200)); }
+        resetUI();
+
+        if (data.success) {
+          showResult(
+            true,
+            "✅ Payment Successful!",
+            `Payment ID: ${data.payment_id}<br/>Order ID: ${data.order_id}`
+          );
+        } else {
+          showResult(false, "❌ Verification Failed", data.message);
+        }
+      } catch (err) {
+        resetUI();
+        showResult(false, "❌ Verification Error", err.message);
+      }
+    }
+
+    // ============================
+    //  UI HELPERS
+    // ============================
+    function resetUI() {
+      document.getElementById("payBtn").disabled = false;
+      document.getElementById("payBtn").style.opacity = "1";
+      document.getElementById("loading").style.display = "none";
+    }
+
+    function showResult(success, title, details) {
+      const card = document.getElementById("resultCard");
+      const titleEl = document.getElementById("resultTitle");
+      const detailsEl = document.getElementById("resultDetails");
+
+      card.className = "result-card " + (success ? "success" : "error");
+      card.style.display = "block";
+      titleEl.textContent = title;
+      detailsEl.innerHTML = details
+        ? details.split("<br/>").map(d => `<p>${d}</p>`).join("")
+        : "";
+    }
+  </script>
+</body>
+</html>
