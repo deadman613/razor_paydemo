@@ -15,6 +15,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
+// Serve index.html at root
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
+});
+
 const KEY_ID = process.env.RAZORPAY_KEY_ID;
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
