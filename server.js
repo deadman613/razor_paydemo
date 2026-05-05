@@ -15,11 +15,17 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
-// ⚠️ REPLACE with your Razorpay Test Keys
-// Get them from: https://dashboard.razorpay.com/app/keys
+const KEY_ID = process.env.RAZORPAY_KEY_ID;
+const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+if (!KEY_ID || !KEY_SECRET) {
+  console.error("ERROR: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set as environment variables.");
+  process.exit(1);
+}
+
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SlZQa4VnL4laOg",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "K1c8FpB6vsTD29j6ICOVzQt6",
+  key_id: KEY_ID,
+  key_secret: KEY_SECRET,
 });
 
 // ✅ Route: Create Order
@@ -41,7 +47,7 @@ app.post("/create-order", async (req, res) => {
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      key: razorpay.key_id,
+      key: KEY_ID,
     });
   } catch (error) {
     console.error("Order creation error:", error);
@@ -58,7 +64,7 @@ app.post("/verify-payment", (req, res) => {
     // Generate expected signature
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac("sha256", razorpay.key_secret)
+      .createHmac("sha256", KEY_SECRET)
       .update(body.toString())
       .digest("hex");
 
